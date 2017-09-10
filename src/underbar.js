@@ -335,6 +335,21 @@ _.extend = function(obj) {
       };
     }
 
+  // Delays a function for the given number of milliseconds, and then calls
+  // it with the arguments supplied.
+  //
+  // The arguments for the original function are passed after the wait
+  // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
+  // call someFunction('a', 'b') after 500ms
+  _.delay = function(func, wait) {
+    var args = [];
+    for (var i = 0; i < arguments.length; i++) {
+      args[i] = arguments[i];
+    }
+    console.log(args);  
+    return setTimeout.apply(this, args);
+}; 
+
 
   /**
    * ADVANCED COLLECTION OPERATIONS
@@ -347,7 +362,16 @@ _.extend = function(obj) {
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
-  };
+    var newArr = [];
+    var endCondition = array.length;
+    var copy =  array.slice(0, array.length);
+    while (copy.length > 0) {
+      var randomIndex = Math.floor(Math.random() * copy.length);
+      newArr.push(copy[randomIndex]);
+      copy = copy.slice(0, randomIndex).concat(copy.slice(randomIndex + 1, copy.length));
+    }
+    return newArr;
+};
 
 
   /**
