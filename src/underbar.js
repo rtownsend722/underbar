@@ -95,8 +95,6 @@
       }
     }
     return filtered;
-    // TIP: see if you can re-use _.filter() here, without simply
-    // copying code in and modifying it
   };
 
   // Produce a duplicate-free version of the array.
@@ -118,9 +116,6 @@
       mapped.push(iterator(collection[i]));
     }
     return mapped;
-    // map() is a useful primitive iteration function that works a lot
-    // like each(), but in addition to running the operation on all
-    // the members, it also maintains an array of results.
   };
 
   /*
@@ -133,9 +128,6 @@
   // a certain property in it. E.g. take an array of people and return
   // an array of just their ages
   _.pluck = function(collection, key) {
-    // TIP: map is really handy when you want to transform an array of
-    // values into a new array of values. _.pluck() is solved for you
-    // as an example of this.
     return _.map(collection, function(item){
       return item[key];
     });
@@ -178,43 +170,43 @@
 
   // Determine if the array or object contains a given value (using `===`).
   _.contains = function(collection, target) {
-  if (Array.isArray(collection)) {
-    return _.reduce(collection, function(wasFound, item) {
-      if (wasFound) {
-        return true;
+    if (Array.isArray(collection)) {
+      return _.reduce(collection, function(wasFound, item) {
+        if (wasFound) {
+          return true;
+        }
+        return item === target;
+      }, false);
+    } else {
+      for (var i in collection) {
+        var wasFound = false;
+        if (collection[i] === target) {
+          return true;
+        }
       }
-      return item === target;
-    }, false);
-  } else {
-    for (var i in collection) {
-      var wasFound = false;
-      if (collection[i] === target) {
-        return true;
-      }
+      return wasFound;
     }
-    return wasFound;
-  }
-};
+  };
 
 
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
-  if (iterator === undefined) {
-    return _.reduce(collection, function(isTrue, item) {
-      if (!item) {
-        isTrue = false;
-      }
-      return isTrue;
-    });
-  } else {
-    return _.reduce(collection, function(isTrue, item) {
-      if (!iterator(item)) {
-        isTrue = false;
-      } 
-      return isTrue;
-    }, true);
-  }
-};
+    if (iterator === undefined) {
+      return _.reduce(collection, function(isTrue, item) {
+        if (!item) {
+          isTrue = false;
+        }
+        return isTrue;
+      });
+    } else {
+      return _.reduce(collection, function(isTrue, item) {
+        if (!iterator(item)) {
+          isTrue = false;
+        } 
+        return isTrue;
+      }, true);
+    }
+  };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
@@ -247,20 +239,19 @@
 
   // Extend a given object with all the properties of the passed in
   // object(s).
-_.extend = function(obj) {
-  //retain key value pair from source, but overwrite destination
-  var args = [];
-  for (var i = 0; i < arguments.length; i++) {
-    args[i] = arguments[i];
-  }
-  for (var j = 1; j <= arguments.length; j++) {
-    var source = arguments[j];
-    for (var property in source) {
-      obj[property] = source[property]
+  _.extend = function(obj) {
+    var args = [];
+    for (var i = 0; i < arguments.length; i++) {
+      args[i] = arguments[i];
     }
-  }
-  return obj;
-};
+    for (var j = 1; j <= arguments.length; j++) {
+      var source = arguments[j];
+      for (var property in source) {
+        obj[property] = source[property]
+      }
+    }
+    return obj;
+  };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
@@ -278,7 +269,7 @@ _.extend = function(obj) {
       }
     }
     return obj;
-};
+	};
 
 
   /**
@@ -292,22 +283,13 @@ _.extend = function(obj) {
   // Return a function that can be called at most one time. Subsequent calls
   // should return the previously returned value.
   _.once = function(func) {
-    // TIP: These variables are stored in a "closure scope" (worth researching),
-    // so that they'll remain available to the newly-generated function every
-    // time it's called.
     var alreadyCalled = false;
     var result;
-
-    // TIP: We'll return a new function that delegates to the old one, but only
-    // if it hasn't been called before.
     return function() {
       if (!alreadyCalled) {
-        // TIP: .apply(this, arguments) is the standard way to pass on all of the
-        // infromation from one function call to another.
         result = func.apply(this, arguments);
         alreadyCalled = true;
       }
-      // The new function always returns the originally computed result.
       return result;
     };
   };
@@ -322,18 +304,18 @@ _.extend = function(obj) {
   // instead if possible.
   _.memoize = function(func) {
     var cache = {};
-      return function(index) {
-        var args = [];
-        for (var i = 0; i < arguments.length; i++) {
-          args[i] = arguments[i];
-        }
-        var index = JSON.stringify(args);
-        if (cache[index] === undefined) {
-          cache[index] = func.apply(this, args);
-        }
-        return cache[index];
-      };
+    return function(index) {
+      var args = [];
+      for (var i = 0; i < arguments.length; i++) {
+        args[i] = arguments[i];
+      }
+      var index = JSON.stringify(args);
+      if (cache[index] === undefined) {
+        cache[index] = func.apply(this, args);
+      }
+      return cache[index];
     }
+   };
 
   // Delays a function for the given number of milliseconds, and then calls
   // it with the arguments supplied.
@@ -346,9 +328,8 @@ _.extend = function(obj) {
     for (var i = 0; i < arguments.length; i++) {
       args[i] = arguments[i];
     }
-    console.log(args);  
     return setTimeout.apply(this, args);
-}; 
+  }; 
 
 
   /**
@@ -371,7 +352,7 @@ _.extend = function(obj) {
       copy = copy.slice(0, randomIndex).concat(copy.slice(randomIndex + 1, copy.length));
     }
     return newArr;
-};
+  };
 
 
   /**
@@ -385,6 +366,13 @@ _.extend = function(obj) {
   // Calls the method named by functionOrKey on each value in the list.
   // Note: You will need to learn a bit about .apply to complete this.
   _.invoke = function(collection, functionOrKey, args) {
+    var args = [];
+    for (var i = 0; i < arguments.length; i++) {
+      args[i] = arguments[i];
+    }
+    return _.map(collection, function() {
+      return functionOrKey.apply(null , args);
+    });
   };
 
   // Sort the object's values by a criterion produced by an iterator.
