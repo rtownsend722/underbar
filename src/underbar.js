@@ -64,13 +64,14 @@
     // TIP: Here's an example of a function that needs to iterate, which we've
     // implemented for you. Instead of using a standard `for` loop, though,
     // it uses the iteration helper `each`, which you will need to write.
-    var result = -1;
-
-    _.each(array, function(item, index) {
-      if (item === target && result === -1) {
-        result = index;
+    var firstIndex = -1;
+    var findMatch = function(value, index) {
+      if (value === target && firstIndex === -1) {
+        firstIndex = index;
       }
-    });
+    }
+    _.each(array, findMatch);
+    return firstIndex;
 
     return result;
   };
@@ -78,43 +79,50 @@
   // Return all elements of an array that pass a truth test.
   _.filter = function(collection, test) {
     var filtered = [];
-    for (var i = 0; i < collection.length; i++) {
-      if (test(collection[i])) {
-        filtered.push(collection[i]);
+    _.each(collection, function(value) {
+      if (test(value)) {
+        filtered.push(value);
       }
-    }
+    });
     return filtered;
   };
 
   // Return all elements of an array that don't pass a truth test.
   _.reject = function(collection, test) {
     var filtered = [];
-    for (var i = 0; i < collection.length; i++) {
-      if(!test(collection[i])) {
-        filtered.push(collection[i]);
+    _.each(collection, function(value) {
+      if (!test(value)) {
+        filtered.push(value);
       }
-    }
-    return filtered;
+    });
+    return filtered
   };
 
   // Produce a duplicate-free version of the array.
   _.uniq = function(array, isSorted, iterator) {
-  var unique = [];
-  for (var i = 0; i < array.length; i++) {
-    if (!unique.includes(array[i])) {
-      unique.push(array[i]);
+    var unique = [];
+    if (!isSorted) {
+      array.sort();
     }
-  }
-  return unique;
+    _.each(array, function(value, index, collection) {
+      if (index === collection.length - 1) {
+          unique.push(value);
+      } else {
+        if (value !== collection[index + 1]) {
+          unique.push(value);
+        }
+      }
+    });
+  return unique
 };
 
 
   // Return the results of applying an iterator to each element.
   _.map = function(collection, iterator) {
     var mapped = [];
-    for (var i = 0; i < collection.length; i++) {
-      mapped.push(iterator(collection[i]));
-    }
+   _.each(collection, function(value) {
+    mapped.push(iterator(value));
+    });
     return mapped;
   };
 
@@ -170,26 +178,20 @@
 
   // Determine if the array or object contains a given value (using `===`).
   _.contains = function(collection, target) {
-    if (Array.isArray(collection)) {
-      return _.reduce(collection, function(wasFound, item) {
-        if (wasFound) {
-          return true;
-        }
-        return item === target;
-      }, false);
-    } else {
-      for (var i in collection) {
-        var wasFound = false;
-        if (collection[i] === target) {
-          return true;
+    var found = false;
+    _.each(collection, function(value) {
+      if (found === false) {
+        if (value === target) {
+          found = true;
         }
       }
-      return wasFound;
-    }
+    });
+    return found;
   };
 
 
   // Determine whether all of the elements match a truth test.
+  /*****/
   _.every = function(collection, iterator) {
     if (iterator === undefined) {
       return _.reduce(collection, function(isTrue, item) {
@@ -240,34 +242,26 @@
   // Extend a given object with all the properties of the passed in
   // object(s).
   _.extend = function(obj) {
-    var args = [];
-    for (var i = 0; i < arguments.length; i++) {
-      args[i] = arguments[i];
-    }
-    for (var j = 1; j <= arguments.length; j++) {
-      var source = arguments[j];
-      for (var property in source) {
-        obj[property] = source[property]
+    var args = Array.prototype.slice.call(arguments);
+    _.each(args, function(prop) {
+      for (var j in prop) {
+        obj[j] = prop[j];
       }
-    }
+    });
     return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
-    var args = [];
-    for (var i = 0; i < arguments.length; i++) {
-      args[i] = arguments[i];
-    }
-    for (var j = 1; j <= arguments.length; j++) {
-      var source = arguments[j];
-      for (var property in source) {
-        if (!obj.hasOwnProperty(property)) {
-          obj[property] = source[property]
+    var args = Array.prototype.slice.call(arguments);
+    _.each(args, function(prop) {
+      for (var j in prop) {
+        if (!obj.hasOwnProperty(j)) {
+        obj[j] = prop[j];
         }
       }
-    }
+    });
     return obj;
 	};
 
@@ -283,15 +277,15 @@
   // Return a function that can be called at most one time. Subsequent calls
   // should return the previously returned value.
   _.once = function(func) {
-    var alreadyCalled = false;
+    var called = false;
     var result;
     return function() {
-      if (!alreadyCalled) {
+      if (!called) {
         result = func.apply(this, arguments);
-        alreadyCalled = true;
+        called = true;
       }
       return result;
-    };
+    };  
   };
 
   // Memorize an expensive function's results by storing them. You may assume
