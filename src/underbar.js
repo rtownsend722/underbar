@@ -360,12 +360,12 @@
   // Calls the method named by functionOrKey on each value in the list.
   // Note: You will need to learn a bit about .apply to complete this.
   _.invoke = function(collection, functionOrKey, args) {
-    var args = [];
-    for (var i = 0; i < arguments.length; i++) {
-      args[i] = arguments[i];
-    }
-    return _.map(collection, function() {
-      return functionOrKey.apply(null , args);
+    var args = Array.prototype.slice.call(arguments);
+    return _.map(collection, function(value) {
+      if (typeof(functionOrKey) === 'string') {
+        functionOrKey = value[functionOrKey];
+      }
+      return functionOrKey.apply(value, args);
     });
   };
 
@@ -374,6 +374,15 @@
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+    if (typeof(iterator) === 'string') {
+      return collection.sort(function(a, b) {
+        return a[iterator] - b[iterator];
+      });
+    } else {
+      return collection.sort(function(a, b) {
+        return iterator(a) - iterator(b);
+      });
+    }
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -382,6 +391,20 @@
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
+    var args = Array.prototype.slice.call(arguments);
+    var zipped = [];
+    var mainArr = args[0];
+    mainArr = _.map(mainArr, function(value) {
+      return [value];
+    });
+
+    for (var i = 1; i < args.length; i++) {
+      var arr = args[i];
+      for (var j = 0; j < mainArr.length; j++) {
+        mainArr[j].push(arr[j]);
+      }
+    }
+    return mainArr;
   };
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
@@ -389,16 +412,65 @@
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
+    var flattened = [];
+    var findCore = function(array) {
+      _.each(array, function(value) {
+          if (Array.isArray(value)) {
+          findCore(value);
+        } else {
+          flattened.push(value);
+        }
+      });
+    }
+    findCore(nestedArray);
+    return flattened;
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
+    var args = Array.prototype.slice.call(arguments);
+    var base = args[0];
+    var intersected = [];
+
+    for (var i = 1; i < args.length; i++) {
+      var arg = args[i];
+      _.each(arg, function(value) {
+        var member = value;
+        _.each(base, function(value) {
+          if (member === value) {
+            intersected.push(value);
+          }
+        });
+      });
+    }
+    
+    return intersected;
   };
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
+    var args = Array.prototype.slice.call(arguments);
+    var base = args[0];
+
+    var removeElement = function(array, index) {
+      return array.slice(0, index).concat(array.slice(index + 1));
+    }
+
+    for (var i = 1; i < args.length; i++) {
+      var arg = args[i];
+      _.each(arg, function(value) {
+        var member = value;
+        for (var k = 0; k < base.length; k++) {
+          if (member === base[k]) {
+            base = removeElement(base, k);
+          }
+        }
+      });
+    }
+
+    return base;
   };
 
   // Returns a function, that, when invoked, will only be triggered at most once
