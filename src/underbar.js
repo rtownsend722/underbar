@@ -40,6 +40,10 @@
   _.last = function(array, n) {
     return n === undefined ? array[array.length - 1] : n === 0 ? [] : array.slice(-n); 
   };
+  //alternate solution
+  // _.last = function(array, n) {
+  //   return n === undefined ? array[array.length - 1] : array.slice(Math.max(0, array.length-1)); 
+  // };
 
   // Call iterator(value, key, collection) for each element of collection.
   // Accepts both arrays and objects.
@@ -52,8 +56,9 @@
         iterator(collection[i], i, collection);
       }
     } else {
-      for (var i in collection) {
-        iterator(collection[i], i, collection);
+    	//per solution vid - rename object iterator to 'key' for clarity
+      for (var key in collection) {
+        iterator(collection[key], key, collection);
       } 
     }
   };
@@ -89,39 +94,34 @@
 
   // Return all elements of an array that don't pass a truth test.
   _.reject = function(collection, test) {
-    var filtered = [];
-    _.each(collection, function(value) {
-      if (!test(value)) {
-        filtered.push(value);
-      }
+  	//per solution vids - implement _.filter where the test iterator reverses the test's boolean
+    return _.filter(collection, function(value) {
+    	return !test(value);
     });
-    return filtered
   };
 
   // Produce a duplicate-free version of the array.
   _.uniq = function(array, isSorted, iterator) {
-    var unique = [];
-    if (!isSorted) {
-      array.sort();
-    }
-    _.each(array, function(value, index, collection) {
-      if (index === collection.length - 1) {
-          unique.push(value);
-      } else {
-        if (value !== collection[index + 1]) {
-          unique.push(value);
-        }
-      }
-    });
-  return unique
+	//per solutions vid. - use intermediary storage object to reduce time complexity - this is called BREADCRUMBING
+	//objects have constant time lookup
+  var unique = {};
+  var results = [];
+  _.each(array, function(value) {
+  	unique[value] = value;
+  });
+  _.each(unique, function(value) {
+  	results.push(value);
+  });
+  return results;
 };
 
 
   // Return the results of applying an iterator to each element.
+  //per solution vid - pass in value, key, and collection to _.each
   _.map = function(collection, iterator) {
     var mapped = [];
-   _.each(collection, function(value) {
-    mapped.push(iterator(value));
+   _.each(collection, function(value, key, collection) {
+    mapped.push(iterator(value, key, collection));
     });
     return mapped;
   };
@@ -162,18 +162,21 @@
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
   _.reduce = function(collection, iterator, accumulator) {
-    var reduced = collection[0];
-    if (accumulator !== undefined) {
-      reduced = accumulator;
-      for (var i = 0; i < collection.length; i++) {
-        reduced = iterator(reduced, collection[i]);
-      }
-    } else {
-      for (var i = 1; i < collection.length; i++) {
-        reduced = iterator(reduced, collection[i]);
-      }
-    }
-    return reduced;
+  	//check to see if we got 2 arguments (ie: did we NOT recieve an accumulator)
+  	var initializing = arguments.length === 2;
+    
+    _.each(collection, function(value) {
+    	if (initializing) {
+    		//if we only got 2 arguments, set accumulator to the initial value and then "turn off" initializing
+    		accumulator = value;
+    		initializing = false;
+    	} else {
+    		//when accumulator is set, either via initializing or as a passed in argument, we can executing the accumulation phase
+    		accumulator = iterator(accumulator, value);
+    	}
+    });
+
+    return accumulator;
   };
 
   // Determine if the array or object contains a given value (using `===`).
@@ -193,42 +196,25 @@
   // Determine whether all of the elements match a truth test.
   /*****/
   _.every = function(collection, iterator) {
-    if (iterator === undefined) {
-      return _.reduce(collection, function(isTrue, item) {
-        if (!item) {
-          isTrue = false;
-        }
-        return isTrue;
-      });
-    } else {
-      return _.reduce(collection, function(isTrue, item) {
-        if (!iterator(item)) {
-          isTrue = false;
-        } 
-        return isTrue;
-      }, true);
-    }
+		//use _.identity to set iterator where iterator is undefined
+		iterator = iterator || _.identity;
+ 
+  	//implement !! to convert truthy values to true
+    return !!_.reduce(collection, function(isTrue, item) {
+    	//per solution vid - a more clever way setting the value of the accumulator
+      return isTrue && iterator(item);
+    }, true);
+    
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
-    var isTrue = false;
-    if (iterator === undefined) {
-      return _.reduce(collection, function(isTrue, item) {
-        if (item) {
-          isTrue = true;
-        }
-        return isTrue;
-      }, false);
-    } else {
-      return _.reduce(collection, function(isTrue, item) {
-        if (iterator(item)) {
-          isTrue = true;
-        }
-        return isTrue;
-      }, false);
-    }
+		iterator = iterator || _.identity;
+ 
+    return !!_.reduce(collection, function(isTrue, item) {
+      return isTrue || iterator(item);
+    }, false);
   };
 
 
@@ -243,10 +229,10 @@
   // object(s).
   _.extend = function(obj) {
     var args = Array.prototype.slice.call(arguments);
-    _.each(args, function(prop) {
-      for (var j in prop) {
-        obj[j] = prop[j];
-      }
+    _.each(args, function(arg) {
+      _.each(arg, function(value, key) {
+  			obj[key] = value;
+    	});
     });
     return obj;
   };
@@ -255,12 +241,13 @@
   // exists in obj
   _.defaults = function(obj) {
     var args = Array.prototype.slice.call(arguments);
-    _.each(args, function(prop) {
-      for (var j in prop) {
-        if (!obj.hasOwnProperty(j)) {
-        obj[j] = prop[j];
-        }
-      }
+    _.each(args, function(arg) {
+    	_.each(arg, function(value, key) {
+    		//clever check for existing value - basically if where obj[key] === undefined evaluates to true set equal to 'value'
+    		// if (!obj.hasOwnProperty(value)) {
+    			obj[key] === undefined && (obj[key] = value);
+    		// }
+    	});
     });
     return obj;
 	};
@@ -279,6 +266,9 @@
   _.once = function(func) {
     var called = false;
     var result;
+    // >> CLOSURE IN ACTION <<
+    // return function is able to access called and result variables, though they are declared outside of it
+    // the return function continues to have access to the variables after it is returned
     return function() {
       if (!called) {
         result = func.apply(this, arguments);
@@ -298,16 +288,13 @@
   // instead if possible.
   _.memoize = function(func) {
     var cache = {};
-    return function(index) {
-      var args = [];
-      for (var i = 0; i < arguments.length; i++) {
-        args[i] = arguments[i];
+    return function(arg) {
+      var args = Array.prototype.slice.call(arguments);
+      var arg = JSON.stringify(args);
+      if (cache[arg] === undefined) {
+        cache[arg] = func.apply(this, args);
       }
-      var index = JSON.stringify(args);
-      if (cache[index] === undefined) {
-        cache[index] = func.apply(this, args);
-      }
-      return cache[index];
+      return cache[arg];
     }
    };
 
@@ -318,10 +305,7 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
-    var args = [];
-    for (var i = 0; i < arguments.length; i++) {
-      args[i] = arguments[i];
-    }
+    var args = Array.prototype.slice.call(arguments);
     return setTimeout.apply(this, args);
   }; 
 
@@ -360,11 +344,9 @@
   // Calls the method named by functionOrKey on each value in the list.
   // Note: You will need to learn a bit about .apply to complete this.
   _.invoke = function(collection, functionOrKey, args) {
-    var args = Array.prototype.slice.call(arguments);
     return _.map(collection, function(value) {
-      if (typeof(functionOrKey) === 'string') {
-        functionOrKey = value[functionOrKey];
-      }
+    	//rewrote using ternary operator to assign conditional value to functionOrKey
+      functionOrKey = typeof(functionOrKey) === 'string' ? value[functionOrKey] : functionOrKey;
       return functionOrKey.apply(value, args);
     });
   };
